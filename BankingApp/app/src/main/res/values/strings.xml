@@ -1,0 +1,20 @@
+<resources>
+    <string name="app_name">BankingApp</string>
+    <string name="Greeting">Welcome to WW Bank!</string>
+    <string name="Username">Username</string>
+    <string name="Password">Password</string>
+    <string name="Login">Login</string>
+    <string name="CreateAccount">Create Account</string>
+    <string name="ConfirmPassword">Confirm Password</string>
+    <string name="CreateInstructions">Enter your new account credentials below</string>
+    <string name="ChooseInstructions">Choose an action to perform</string>
+    <string name="Logout">Logout</string>
+    <string name="CheckBalance">Check Balance</string>
+    <string name="Deposit">Deposit</string>
+    <string name="Withdraw">Withdraw</string>
+    <string name="BalanceHistory">Current Balance and Transaction History</string>
+    <string name="SubmitDeposit">Submit Deposit</string>
+    <string name="SubmitWithdrawal">Submit Withdrawal</string>
+    <string name="Confirmation">Submission Confirmed!</string>
+    <string name="Terms"><![CDATA[Accept (but dont read) our extremely invasive \"Terms & Conditions\"]]></string>
+</resources>
