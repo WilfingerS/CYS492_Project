@@ -18,4 +18,8 @@
     <string name="SubmitWithdrawal">Submit Withdrawal</string>
     <string name="Confirmation">Submission Confirmed!</string>
     <string name="Terms"><![CDATA[Accept (but dont read) our extremely invasive \"Terms & Conditions\"]]></string>
+    <string name="DepositInstructions">Enter your deposit amount below:</string>
+    <string name="DollarSign">$</string>
+    <string name="WithdrawInstructions">Enter your withdrawal amount below:</string>
+    <string name="NoMoney">$0.00</string>
 </resources>
