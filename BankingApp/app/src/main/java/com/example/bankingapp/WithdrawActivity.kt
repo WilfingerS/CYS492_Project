@@ -19,7 +19,7 @@ class WithdrawActivity : AppCompatActivity() {
             // Retrieve withdrawal value
             val withdrawalValue = withdrawalAmount.text.toString().toDoubleOrNull()
             // ~~~~~(Retrieve user's currentBalance)~~~~~
-            var currentBalance = 4000.00 // just a placeholder
+            var currentBalance = 4000.0 // just a placeholder
             // ~~~(check if user has sufficient funds to process withdrawal)~~~
             if (withdrawalValue != null){
                 if (withdrawalValue <= 5000.0) {
