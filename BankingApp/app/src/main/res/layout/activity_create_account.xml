@@ -5,6 +5,7 @@
     android:id="@+id/main"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="#2632C819"
     tools:context=".CreateAccountActivity">
 
     <TextView
@@ -22,7 +23,7 @@
         app:layout_constraintTop_toTopOf="parent" />
 
     <EditText
-        android:id="@+id/CreateUsername"
+        android:id="@+id/CreateUsername_et"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="64dp"
@@ -30,28 +31,28 @@
         android:hint="@string/Username"
         android:inputType="text"
         android:textSize="24sp"
-        app:layout_constraintBottom_toTopOf="@+id/CreatePassword"
+        app:layout_constraintBottom_toTopOf="@+id/CreatePassword_et"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.5"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/CreateInstructions" />
 
     <EditText
-        android:id="@+id/CreatePassword"
+        android:id="@+id/CreatePassword_et"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:ems="10"
         android:hint="@string/Password"
         android:inputType="textPassword"
         android:textSize="24sp"
-        app:layout_constraintBottom_toTopOf="@+id/ConfirmPassword"
+        app:layout_constraintBottom_toTopOf="@+id/ConfirmPassword_et"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.5"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/CreateUsername" />
+        app:layout_constraintTop_toBottomOf="@+id/CreateUsername_et" />
 
     <EditText
-        android:id="@+id/ConfirmPassword"
+        android:id="@+id/ConfirmPassword_et"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:ems="10"
@@ -62,7 +63,7 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.5"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/CreatePassword" />
+        app:layout_constraintTop_toBottomOf="@+id/CreatePassword_et" />
 
     <Button
         android:id="@+id/SubmitAccount"
