@@ -30,12 +30,11 @@ class ChooseActionActivity : AppCompatActivity() {
 
     fun chooseAction(view: View){
         val actionIntent = when (view) { // choose which intent to send based on Button clicked
-            findViewById<Button>(R.id.CheckBalance) -> { Intent(this, CheckBalanceActivity::class.java)
-                    .putExtra("username", username) }
+            findViewById<Button>(R.id.CheckBalance) -> Intent(this, CheckBalanceActivity::class.java)
             findViewById<Button>(R.id.Deposit) -> Intent(this, DepositActivity::class.java)
             findViewById<Button>(R.id.Withdraw) -> Intent(this, WithdrawActivity::class.java)
             else -> Intent(this, LoginActivity::class.java) // covers Logout Button
-        }
+        }.putExtra("username", username)
         activityLauncher.launch(actionIntent)
     }
 

@@ -25,27 +25,32 @@ class LoginActivity : AppCompatActivity() {
 
     // initialize launcher to use in tryLogin()
     private lateinit var activityLauncher: ActivityResultLauncher<Intent>
-    private lateinit var username: String
+    private lateinit var tryUsernameET: EditText
+    private lateinit var tryPasswordET: EditText
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContentView(R.layout.activity_login) // Recall of the xml layout resource
 
+        tryUsernameET = findViewById(R.id.Username_et)
+        tryPasswordET = findViewById(R.id.Password_et)
+
         activityLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
             if (result.resultCode == RESULT_OK){
                 val data = result.data
-                username = data?.getStringExtra("username")?: "Username Pass Failed"
-                Log.d(debugTag, "USERNAME = $username")
+                val username = data?.getStringExtra("username").toString()
+                tryUsernameET.setText(username)
+                tryPasswordET.text = null
+                Log.d(debugTag, "Passed USERNAME as... $username")
             }
         }
     } // End of onCreate()
 
     fun tryLogin(view: View) {
-        val tryUsernameET = findViewById<EditText>(R.id.Username_et)
+
         val tryUsername = tryUsernameET.text.toString()
         tryUsernameET.hideKeyboard()
-        val tryPasswordET = findViewById<EditText>(R.id.Password_et)
         val tryPassword = tryPasswordET.text.toString()
         tryPasswordET.hideKeyboard()
 
@@ -61,7 +66,11 @@ class LoginActivity : AppCompatActivity() {
 
                 if (tryPassHash == dbPassHash) {
                     val loginIntent = Intent(this, ChooseActionActivity::class.java)
-                        .putExtra("username", username)
+                        .putExtra("username", tryUsername)
+                    Log.d(debugTag, "Successfully logged in $tryUsername!\n" +
+                                "Using password salted and hashed as... " +
+                            tryPassHash.contentStringToByteArray().toString(Charsets.UTF_16)
+                    )
                     activityLauncher.launch(loginIntent)
                 }
                 else Toast.makeText(this, "Username or Password is incorrect", Toast.LENGTH_SHORT).show()
@@ -82,11 +91,6 @@ class LoginActivity : AppCompatActivity() {
         val md = MessageDigest.getInstance("SHA-256")
         md.update(saltBytes)
         return md.digest(plaintext.toByteArray()).contentToString()
-//        val sb = StringBuilder()
-//        for (aByte in bytes) {
-//            sb.append(((aByte.toInt() and 0xff) + 0x100).toString(16).substring(1))
-//        }
-//        return sb.toString()
     }
 
     private fun String.contentStringToByteArray(): ByteArray{

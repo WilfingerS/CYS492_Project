@@ -61,30 +61,26 @@ class CreateAccountActivity : AppCompatActivity() {
             else Toast.makeText(this, "Password entries do not match", Toast.LENGTH_SHORT).show()
 
             if (successful) {
-                /* create user's salt */
-                /* hash user's password with salt */
-                /* store as ("password" to "salt + salted-and-hashed-password") */
-                val symmetricKey = generateAESKey() // test of key gen function
-
                 val salt = createSalt()
                 val passHash = doHashAndSalt(firstPassword, salt)
+                val symmetricKey = generateAESKey()
 
                 // send username back to LoginActivity for convenience and testing
                 val resultIntent = Intent().putExtra("username", username)
 
                 // Store user data in FireBase and Log the callback result
                 val userData = hashMapOf(
-                    "name" to username,
-                    "password" to passHash, /* store actual hashed password */
-                    "salt" to salt, /* store actual salt */
-                    "key" to symmetricKey /* test of key conversion and storage */
+                    "salt" to salt,
+                    "password" to passHash,
+                    "key" to symmetricKey
                 )
                 usersCollection.document(username).set(userData)
-                    .addOnSuccessListener { Log.d(debugTag, "Account successfully created!") }
+                    .addOnSuccessListener { Log.d(debugTag,
+                        "Account successfully created!\n" +
+                                "Password Salted and Hashed as... $passHash") }
                     .addOnFailureListener { e -> Log.w(debugTag, "Error creating account", e) }
 
                 val initialBalanceData = hashMapOf(
-                    "action" to "deposit",
                     "amount" to "4000.00",
                     "startingBalance" to "0.00",
                     "endingBalance" to "4000.00",
@@ -124,11 +120,6 @@ class CreateAccountActivity : AppCompatActivity() {
         val md = MessageDigest.getInstance("SHA-256")
         md.update(saltBytes)
         return md.digest(plaintext.toByteArray()).contentToString()
-//        val sb = StringBuilder()
-//        for (aByte in bytes) {
-//            sb.append(((aByte.toInt() and 0xff) + 0x100).toString(16).substring(1))
-//        }
-//        return sb.toString()
     }
 
     private fun generateAESKey(): String {

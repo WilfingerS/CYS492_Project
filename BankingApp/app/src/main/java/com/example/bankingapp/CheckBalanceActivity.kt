@@ -33,7 +33,7 @@ class CheckBalanceActivity : AppCompatActivity() {
             .collection("TransactionHistory").get()
             .addOnSuccessListener { result ->
                 // Convert balance, dbKey, and contentKey to byte[] for E/D
-                val balance = result.documents.first().get("endingBalance").toString()
+                val balance = result.documents.last().get("endingBalance").toString()
                 val encryptedBalance = balance.toByteArray().toString(Charsets.UTF_16) // only for Log display
                 Log.d(debugTag, "Balance ENCRYPTED? as... $encryptedBalance")
 
