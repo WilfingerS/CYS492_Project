@@ -1,3 +1,3 @@
-Project for CCSU CYS492-02
-Year 2024
-Authors: Ian Wohlhieter, Seth Wilfinger
+Project for CCSU CYS492-02\n
+Year 2024\n
+Authors: Ian Wohlhieter, Seth Wilfinger\n
