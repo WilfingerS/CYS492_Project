@@ -19,20 +19,23 @@ import java.security.NoSuchAlgorithmException
 import java.security.SecureRandom
 import java.time.LocalDateTime
 import javax.crypto.Cipher
-import javax.crypto.KeyGenerator
 import javax.crypto.spec.IvParameterSpec
 import javax.crypto.spec.SecretKeySpec
+import kotlin.math.abs
+import kotlin.math.log10
+
 
 class CreateAccountActivity : AppCompatActivity() {
     private val debugTag = "CreateAccountActivity"
+    // Get a Cloud Firestore instance
+    private val db = FirebaseFirestore.getInstance()
+    private val usersCollection = db.collection("Users")
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContentView(R.layout.activity_create_account) // Recall of the xml layout resource
-        // Get a Cloud Firestore instance
-        val db = FirebaseFirestore.getInstance()
-        val usersCollection = db.collection("Users")
 
         val terms = findViewById<CheckBox>(R.id.Terms)
         terms.setOnClickListener {
@@ -63,21 +66,44 @@ class CreateAccountActivity : AppCompatActivity() {
             if (successful) {
                 val salt = createSalt()
                 val passHash = doHashAndSalt(firstPassword, salt)
-                val symmetricKey = generateAESKey()
+                val pointHash = doHashAndSalt(username+firstPassword, salt)
+                //val symmetricKey = generateAESKey()
 
-                // send username back to LoginActivity for convenience and testing
+                // create 2-out-of-2 secret sharing points
+                val userX = passHash.contentStringToInt()
+                val userY = pointHash.contentStringToInt()
+                val randX = SecureRandom(passHash.contentStringToByteArray()).nextInt()
+                val randY = SecureRandom(pointHash.contentStringToByteArray()).nextInt()
+                // calculate the shared secret (y-Intercept)
+                val slope = (randY-userY).toDouble()/(randX-userX) // m = (y2-y1)/(x2-x1)
+                val yIntercept = (randY-slope*randX).coerceIn(-1.0E15+1, 1.0E15-1) // b = y - mx
+                val leadingDigits = log10(abs(yIntercept)).toInt()+1
+                // format secret into 16-Byte content string
+                val pointKey = String.format("%.0${15-leadingDigits}f",abs(yIntercept))
+                    .padStart(16,'0')
+                    .toByteArray(Charsets.UTF_8).contentToString()
+                Log.d(debugTag, "Slope = $slope\n" +
+                        "Y-Intercept = $yIntercept\n" +
+                        "Point Key = ${pointKey.contentStringToByteArray().toString(Charsets.UTF_8)}")
+
+                // send username and key back to LoginActivity for convenience and testing
                 val resultIntent = Intent().putExtra("username", username)
+                    .putExtra("pointKey", pointKey)
 
                 // Store user data in FireBase and Log the callback result
                 val userData = hashMapOf(
                     "salt" to salt,
                     "password" to passHash,
-                    "key" to symmetricKey
+                    "pointX" to "$randX",
+                    "pointY" to "$randY"
+                    //"key" to symmetricKey,
                 )
                 usersCollection.document(username).set(userData)
                     .addOnSuccessListener { Log.d(debugTag,
                         "Account successfully created!\n" +
-                                "Password Salted and Hashed as... $passHash") }
+                                "Password Salted and Hashed as... " +
+                                passHash.contentStringToByteArray().toString(Charsets.UTF_8)
+                    ) }
                     .addOnFailureListener { e -> Log.w(debugTag, "Error creating account", e) }
 
                 val initialBalanceData = hashMapOf(
@@ -85,9 +111,9 @@ class CreateAccountActivity : AppCompatActivity() {
                     "startingBalance" to "0.00",
                     "endingBalance" to "4000.00",
                 )
-                // Encrypt each data entry value and convert byte[] -> contentString
+                // Encrypt each data entry value
                 for (entry in initialBalanceData.entries)
-                    entry.setValue(aesEncrypt(entry.value, symmetricKey))
+                    entry.setValue(aesEncrypt(entry.value, pointKey, username))
 
                 // Store balance data in FireBase and Log the callback result
                 usersCollection.document(username)
@@ -122,19 +148,19 @@ class CreateAccountActivity : AppCompatActivity() {
         return md.digest(plaintext.toByteArray()).contentToString()
     }
 
-    private fun generateAESKey(): String {
-        val keySize = 128
-        val keyGenerator = KeyGenerator.getInstance("AES")
-        keyGenerator.init(keySize)
-        return keyGenerator.generateKey().encoded.contentToString()
-    }
+//    private fun generateAESKey(): String {
+//        val keySize = 128
+//        val keyGenerator = KeyGenerator.getInstance("AES")
+//        keyGenerator.init(keySize)
+//        return keyGenerator.generateKey().encoded.contentToString()
+//    }
 
-    private fun aesEncrypt(data: String, contentKey: String): String {
+    private fun aesEncrypt(data: String, contentKey: String, username: String): String {
         val dataBytes = data.toByteArray()
         val keyBytes = contentKey.contentStringToByteArray()
         val secretKey = SecretKeySpec(keyBytes, "AES")
         val cipher = Cipher.getInstance("AES/GCM/NoPadding")
-        val iv = "AAAABBBBCCCCDDDD".toByteArray()
+        val iv = username.toByteArray(Charsets.UTF_8)
         val ivParameterSpec = IvParameterSpec(iv) // 16
         cipher.init(Cipher.ENCRYPT_MODE, secretKey, ivParameterSpec)
         return cipher.doFinal(dataBytes).contentToString()
@@ -145,6 +171,13 @@ class CreateAccountActivity : AppCompatActivity() {
         val newByteArray = ByteArray(newArray.size)
         for ((index, x) in newArray.withIndex()) { newByteArray[index]= x.toByte()}
         return newByteArray
+    }
+
+    private fun String.contentStringToInt(): Int{
+        val newArray = this.removeSurrounding("[", "]").split(", ").toTypedArray()
+        var newValue = 1
+        for (x in newArray) newValue *= x.toInt()
+        return newValue
     }
 
     private fun View.hideKeyboard() {

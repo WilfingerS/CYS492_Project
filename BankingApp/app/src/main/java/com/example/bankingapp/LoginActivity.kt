@@ -15,6 +15,8 @@ import androidx.appcompat.app.AppCompatActivity
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.getField
 import java.security.MessageDigest
+import kotlin.math.abs
+import kotlin.math.log10
 
 class LoginActivity : AppCompatActivity() {
 
@@ -59,14 +61,30 @@ class LoginActivity : AppCompatActivity() {
             .addOnSuccessListener { snapshot ->
                 val dbSalt = snapshot.getField<String>("salt")?: "Salt Retreival Failed"
                 val dbPassHash = snapshot.getField<String>("password")?: "Password Retrieval Failed"
+                val dbX = snapshot.getField<String>("pointX")?.toString()?.toDouble()?:0.0
+                val dbY = snapshot.getField<String>("pointY")?.toString()?.toDouble()?:0.0
                 Log.d(debugTag, "Password retrieved as... $dbPassHash")
+                Log.d(debugTag, String.format("Points retrieved as...\nx = %8.07f , y = %8.07f", dbX, dbY))
 
                 /* get user's salt from database and do hash thingy */
                 val tryPassHash = doHashAndSalt(tryPassword, dbSalt)
 
                 if (tryPassHash == dbPassHash) {
+                    val pointHash = doHashAndSalt(tryUsername+tryPassword, dbSalt)
+                    val userX = tryPassHash.contentStringToInt()
+                    val userY = pointHash.contentStringToInt()
+
+                    val slope = (dbY-userY)/(dbX-userX) // m = (y2-y1)/(x2-x1)
+                    val yIntercept = (dbY-slope*dbX).coerceIn(-1.0E15+1, 1.0E15-1) // b=y-mx
+                    val leadingDigits = log10(abs(yIntercept)).toInt()+1
+                    val pointKey = String.format("%.0${15-leadingDigits}f",abs(yIntercept))
+                        .padStart(16,'0')
+                        .toByteArray(Charsets.UTF_8).contentToString()
+
+                    // pass 2-out-of-2 secret sharing KEY
                     val loginIntent = Intent(this, ChooseActionActivity::class.java)
                         .putExtra("username", tryUsername)
+                        .putExtra("pointKey", pointKey)
                     Log.d(debugTag, "Successfully logged in $tryUsername!\n" +
                                 "Using password salted and hashed as... " +
                             tryPassHash.contentStringToByteArray().toString(Charsets.UTF_16)
@@ -98,6 +116,12 @@ class LoginActivity : AppCompatActivity() {
         val newByteArray = ByteArray(newArray.size)
         for ((index, x) in newArray.withIndex()) { newByteArray[index]= x.toByte()}
         return newByteArray
+    }
+    private fun String.contentStringToInt(): Int{
+        val newArray = this.removeSurrounding("[", "]").split(", ").toTypedArray()
+        var newValue = 1
+        for (x in newArray) newValue *= x.toInt()
+        return newValue
     }
 
     private fun View.hideKeyboard() {
