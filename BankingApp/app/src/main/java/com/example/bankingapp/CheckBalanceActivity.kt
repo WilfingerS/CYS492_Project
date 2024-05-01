@@ -10,14 +10,12 @@ import javax.crypto.Cipher
 import javax.crypto.spec.IvParameterSpec
 import javax.crypto.spec.SecretKeySpec
 
-
 class CheckBalanceActivity : AppCompatActivity() {
 
     private val debugTag = "CheckBalanceActivity"
     // Get a Firestore Instance
     private val db = FirebaseFirestore.getInstance()
     private val usersCollection = db.collection("Users")
-    private val cipher = Cipher.getInstance("AES/GCM/NoPadding")
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -29,22 +27,23 @@ class CheckBalanceActivity : AppCompatActivity() {
         if (username != "")Log.d(debugTag, "USERNAME = $username")
         if (pointKey != "") Log.d(debugTag, "POINT KEY = $pointKey")
 
-
         usersCollection.document(username).collection("TransactionHistory").get()
         .addOnSuccessListener { result ->
             // Retrieve balance, dbKey, and contentKey for E/D
-            val balance = result.documents.last().get("endingBalance").toString()
-            val encryptedBalanceString = balance.toByteArray().toString(Charsets.UTF_16) // only for Log display
-            Log.d(debugTag, "Balance ENCRYPTED as... $encryptedBalanceString")
-            val decryptedBalance = aesDecrypt(balance, pointKey, username)
-            findViewById<TextView>(R.id.CurrentBalance).text = "$$decryptedBalance"
+            val encryptedBalance = result.documents.last().get("endingBalance").toString()
+            val decryptedBalance = aesDecrypt(encryptedBalance, pointKey, username)
+
+            findViewById<TextView>(R.id.CurrentBalance).text = "Current Balance: $$decryptedBalance"
+            Log.d(debugTag, "Balance ENCRYPTED (UTF-8) as... " +
+                    encryptedBalance.contentStringToByteArray().toString(Charsets.UTF_8)+
+                    "Balance ENCRYPTED (UTF-16) as... " +
+                    encryptedBalance.contentStringToByteArray().toString(Charsets.UTF_16))
             Log.d(debugTag, "Balance DECRYPTED as... $decryptedBalance")
         }
         .addOnFailureListener {
                 e -> Log.w(debugTag, "Error decrypting balance", e)
         }
     } // End of onCreate()
-
 
 //                usersCollection.document(username).get()
 //                    .addOnSuccessListener { passResult ->
@@ -59,7 +58,7 @@ class CheckBalanceActivity : AppCompatActivity() {
         val encryptedDataBytes = encryptedData.contentStringToByteArray()
         val keyBytes = contentKey.contentStringToByteArray()
         val secretKey = SecretKeySpec(keyBytes, "AES")
-//        val cipher = Cipher.getInstance("AES/GCM/NoPadding")
+        val cipher = Cipher.getInstance("AES/GCM/NoPadding")
         val iv = username.toByteArray(Charsets.UTF_8)
         val ivParameterSpec = IvParameterSpec(iv) // Use the same IV as used in encryption
         cipher.init(Cipher.DECRYPT_MODE, secretKey, ivParameterSpec)

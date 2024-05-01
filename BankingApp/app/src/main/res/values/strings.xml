@@ -12,7 +12,7 @@
     <string name="CheckBalance">Check Balance</string>
     <string name="Deposit">Deposit</string>
     <string name="Withdraw">Withdraw</string>
-    <string name="BalanceHistory">Current Balance and Transaction History</string>
+    <string name="BalanceHistory">Current Available Balance</string>
     <string name="SubmitDeposit">Submit Deposit</string>
     <string name="SubmitWithdrawal">Submit Withdrawal</string>
     <string name="Confirmation">Submission Confirmed!</string>

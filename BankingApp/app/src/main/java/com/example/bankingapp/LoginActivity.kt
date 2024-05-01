@@ -70,24 +70,27 @@ class LoginActivity : AppCompatActivity() {
                 val tryPassHash = doHashAndSalt(tryPassword, dbSalt)
 
                 if (tryPassHash == dbPassHash) {
-                    val pointHash = doHashAndSalt(tryUsername+tryPassword, dbSalt)
+                    val pointHash = doHashAndSalt(tryUsername, dbSalt)
                     val userX = tryPassHash.contentStringToInt()
                     val userY = pointHash.contentStringToInt()
 
                     val slope = (dbY-userY)/(dbX-userX) // m = (y2-y1)/(x2-x1)
-                    val yIntercept = (dbY-slope*dbX).coerceIn(-1.0E15+1, 1.0E15-1) // b=y-mx
-                    val leadingDigits = log10(abs(yIntercept)).toInt()+1
-                    val pointKey = String.format("%.0${15-leadingDigits}f",abs(yIntercept))
-                        .padStart(16,'0')
+                    val yIntercept = (dbY-(slope*dbX)).coerceIn(-1.0E15+1, 1.0E15-1) // b=y-mx
+                    val leadingDigits = abs(log10(abs(yIntercept)).toInt()+1).coerceAtMost(15)
+                    val pointKey = String.format("%.0${15-leadingDigits}f", abs(yIntercept))
                         .toByteArray(Charsets.UTF_8).contentToString()
-
+                    Log.d(debugTag, String.format(
+                        "Slope = %f\n" +
+                        "Y-Intercept = %f\n" +
+                        "            = %.0${15-leadingDigits}f\n" +
+                        "Point Key = %s", slope, yIntercept, abs(yIntercept), pointKey))
                     // pass 2-out-of-2 secret sharing KEY
                     val loginIntent = Intent(this, ChooseActionActivity::class.java)
                         .putExtra("username", tryUsername)
                         .putExtra("pointKey", pointKey)
                     Log.d(debugTag, "Successfully logged in $tryUsername!\n" +
                                 "Using password salted and hashed as... " +
-                            tryPassHash.contentStringToByteArray().toString(Charsets.UTF_16)
+                            tryPassHash.contentStringToByteArray().toString(Charsets.UTF_8)
                     )
                     activityLauncher.launch(loginIntent)
                 }

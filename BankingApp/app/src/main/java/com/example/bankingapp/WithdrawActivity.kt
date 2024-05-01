@@ -37,6 +37,7 @@ class WithdrawActivity : AppCompatActivity() {
 
         val withdrawalAmountET = findViewById<EditText>(R.id.WithdrawalAmount)
         findViewById<Button>(R.id.SubmitWithdrawal).setOnClickListener{
+
             // retrieve user's key
             //var symmetricKey: String
             /*userDocument.get().addOnSuccessListener {result ->
@@ -50,10 +51,14 @@ class WithdrawActivity : AppCompatActivity() {
             userDocument.collection("TransactionHistory").get()
             .addOnSuccessListener { docs ->
                 // ~~~~~(Retrieve user's currentBalance)~~~~~
-                encryptedBalance = docs.documents
-                    .last()?.get("endingBalance").toString()
-                // Decrypt current balance with AES-GCM and user's key
+                encryptedBalance = docs.documents.last()?.get("endingBalance").toString()
                 val decryptedBalance = aesDecrypt(encryptedBalance, pointKey, username).toDouble()
+
+                Log.d(debugTag, "Balance ENCRYPTED (UTF-8) as... " +
+                        encryptedBalance.contentStringToByteArray().toString(Charsets.UTF_8)+
+                        "Balance ENCRYPTED (UTF-16) as... " +
+                        encryptedBalance.contentStringToByteArray().toString(Charsets.UTF_16))
+                Log.d(debugTag, "Balance DECRYPTED as... $decryptedBalance")
 
                 // Retrieve requested withdrawal value to check constraints
                 var withdrawalValue = withdrawalAmountET.text.toString().toDoubleOrNull()
@@ -112,7 +117,6 @@ class WithdrawActivity : AppCompatActivity() {
         val dataBytes = data.toByteArray()
         val keyBytes = contentKey.contentStringToByteArray()
         val secretKey = SecretKeySpec(keyBytes, "AES")
-//        val cipher = Cipher.getInstance("AES/GCM/NoPadding")
         val iv = username.toByteArray(Charsets.UTF_8)
         val ivParameterSpec = IvParameterSpec(iv) // 16
         cipher.init(Cipher.ENCRYPT_MODE, secretKey, ivParameterSpec)
@@ -123,7 +127,6 @@ class WithdrawActivity : AppCompatActivity() {
         val encryptedDataBytes = encryptedData.contentStringToByteArray()
         val keyBytes = contentKey.contentStringToByteArray()
         val secretKey = SecretKeySpec(keyBytes, "AES")
-//        val cipher = Cipher.getInstance("AES/GCM/NoPadding")
         val iv = username.toByteArray(Charsets.UTF_8)
         val ivParameterSpec = IvParameterSpec(iv) // Use the same IV as used in encryption
         cipher.init(Cipher.DECRYPT_MODE, secretKey, ivParameterSpec)

@@ -24,14 +24,13 @@ class DepositActivity : AppCompatActivity() {
     private val db = FirebaseFirestore.getInstance()
     private val userCollection = db.collection("Users")
     private val cipher = Cipher.getInstance("AES/GCM/NoPadding")
-    private lateinit var pointKey: String
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContentView(R.layout.activity_deposit)
         val username = intent.getStringExtra("username")?:"Failed Pass"
-        pointKey = intent.getStringExtra("pointKey")?:""
+        val pointKey = intent.getStringExtra("pointKey")?:""
 
         val userDocument = userCollection.document(username)
         findViewById<Button>(R.id.SubmitDeposit).setOnClickListener{
@@ -45,12 +44,15 @@ class DepositActivity : AppCompatActivity() {
                 // (last document when auto-sorted by date)
                 userDocument.collection("TransactionHistory").get().....*/
 
-            var encryptedBalance: String
             userDocument.collection("TransactionHistory").get().addOnSuccessListener { docs ->
-                encryptedBalance = docs.documents
-                    .last()?.get("endingBalance").toString()
-                // Decrypt current balance with AES-GCM and user's key
+                val encryptedBalance = docs.documents.last()?.get("endingBalance").toString()
                 val decryptedBalance = aesDecrypt(encryptedBalance, pointKey, username).toDouble()
+
+                Log.d(debugTag, "Balance ENCRYPTED (UTF-8) as... " +
+                        encryptedBalance.contentStringToByteArray().toString(Charsets.UTF_8)+
+                        "Balance ENCRYPTED (UTF-16) as... " +
+                        encryptedBalance.contentStringToByteArray().toString(Charsets.UTF_16))
+                Log.d(debugTag, "Balance DECRYPTED as... $decryptedBalance")
 
                 // Retrieve the requested deposit value to check constraints
                 val depositValue = findViewById<EditText>(R.id.DepositAmount)
@@ -86,7 +88,8 @@ class DepositActivity : AppCompatActivity() {
         userDocument.collection("TransactionHistory")
             .document(LocalDateTime.now().toString()).set(transactionData)
             .addOnSuccessListener {
-                Log.d(debugTag, "Successfully deposited!")
+                Log.d(debugTag, String.format("Successfully deposited!" +
+                        "\nAmount = %.2f\nBalance = %.2f", depositAmount, endingBalance))
                 // send info back to ChooseActionActivity for confirmation
                 val resultIntent = Intent().putExtra("action", "deposited")
                     .putExtra("value", depositAmount)
@@ -104,7 +107,6 @@ class DepositActivity : AppCompatActivity() {
         val dataBytes = data.toByteArray()
         val keyBytes = contentKey.contentStringToByteArray()
         val secretKey = SecretKeySpec(keyBytes, "AES")
-//        val cipher = Cipher.getInstance("AES/GCM/NoPadding")
         val iv = username.toByteArray(Charsets.UTF_8)
         val ivParameterSpec = IvParameterSpec(iv) // 16
         cipher.init(Cipher.ENCRYPT_MODE, secretKey, ivParameterSpec)
@@ -115,7 +117,6 @@ class DepositActivity : AppCompatActivity() {
         val encryptedDataBytes = encryptedData.contentStringToByteArray()
         val keyBytes = contentKey.contentStringToByteArray()
         val secretKey = SecretKeySpec(keyBytes, "AES")
-//        val cipher = Cipher.getInstance("AES/GCM/NoPadding")
         val iv = username.toByteArray(Charsets.UTF_8)
         val ivParameterSpec = IvParameterSpec(iv) // Use the same IV as used in encryption
         cipher.init(Cipher.DECRYPT_MODE, secretKey, ivParameterSpec)

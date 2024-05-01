@@ -15,7 +15,7 @@
         android:layout_marginTop="64dp"
         android:text="@string/BalanceHistory"
         android:textAlignment="center"
-        android:textSize="34sp"
+        android:textSize="48sp"
         android:textStyle="bold"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.5"
@@ -29,24 +29,10 @@
         android:layout_marginTop="88dp"
         android:text="Current Balance: $0.00"
         android:textAlignment="center"
-        android:textSize="24sp"
+        android:textSize="34sp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.5"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/CheckBalanceTitle" />
 
-    <ListView
-        android:id="@+id/TransactionHistory"
-        style="@android:style/Widget.ListView"
-        android:layout_width="0dp"
-        android:layout_height="500dp"
-        android:layout_marginTop="48dp"
-        android:cacheColorHint="@color/black"
-        android:divider="@color/black"
-        android:fastScrollStyle="?android:attr/fastScrollStyle"
-        android:listSelector="@android:drawable/list_selector_background"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.5"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/CurrentBalance" />
 </androidx.constraintlayout.widget.ConstraintLayout>

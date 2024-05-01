@@ -43,7 +43,6 @@ class CreateAccountActivity : AppCompatActivity() {
             else terms.setTextColor(Color.BLACK)
         }
 
-        // Listener for the Submit Account Button
         findViewById<Button>(R.id.SubmitAccount).setOnClickListener{
             var successful = false // hold result of password match verification
             // retrieve passwords
@@ -66,7 +65,7 @@ class CreateAccountActivity : AppCompatActivity() {
             if (successful) {
                 val salt = createSalt()
                 val passHash = doHashAndSalt(firstPassword, salt)
-                val pointHash = doHashAndSalt(username+firstPassword, salt)
+                val pointHash = doHashAndSalt(username, salt)
                 //val symmetricKey = generateAESKey()
 
                 // create 2-out-of-2 secret sharing points
@@ -74,18 +73,21 @@ class CreateAccountActivity : AppCompatActivity() {
                 val userY = pointHash.contentStringToInt()
                 val randX = SecureRandom(passHash.contentStringToByteArray()).nextInt()
                 val randY = SecureRandom(pointHash.contentStringToByteArray()).nextInt()
-                // calculate the shared secret (y-Intercept)
-                val slope = (randY-userY).toDouble()/(randX-userX) // m = (y2-y1)/(x2-x1)
-                val yIntercept = (randY-slope*randX).coerceIn(-1.0E15+1, 1.0E15-1) // b = y - mx
-                val leadingDigits = log10(abs(yIntercept)).toInt()+1
-                // format secret into 16-Byte content string
-                val pointKey = String.format("%.0${15-leadingDigits}f",abs(yIntercept))
-                    .padStart(16,'0')
-                    .toByteArray(Charsets.UTF_8).contentToString()
-                Log.d(debugTag, "Slope = $slope\n" +
-                        "Y-Intercept = $yIntercept\n" +
-                        "Point Key = ${pointKey.contentStringToByteArray().toString(Charsets.UTF_8)}")
 
+                // calculate the shared secret (y-Intercept)
+                val slope = (randY-userY)/(randX-userX).toDouble() // m = (y2-y1)/(x2-x1)
+                val yIntercept = (randY-(slope*randX)).coerceIn(-1.0E15+1, 1.0E15-1) // b = y - mx
+                val leadingDigits = abs(log10(abs(yIntercept)).toInt()+1).coerceAtMost(15)
+                // format secret into 16-Byte content string
+                val pointKey = String.format("%.0${15-leadingDigits}f", abs(yIntercept))
+                    .toByteArray(Charsets.UTF_8).contentToString()
+
+                Log.d(debugTag, String.format(
+                    "User Points (X = $userX, Y = $userY)" +
+                    "Slope = %f\n" +
+                    "Y-Intercept = %f\n" +
+                    "            = %.0${15-leadingDigits}f\n" +
+                    "Point Key = %s", slope, yIntercept, abs(yIntercept), pointKey))
                 // send username and key back to LoginActivity for convenience and testing
                 val resultIntent = Intent().putExtra("username", username)
                     .putExtra("pointKey", pointKey)
@@ -167,14 +169,16 @@ class CreateAccountActivity : AppCompatActivity() {
     }
 
     private fun String.contentStringToByteArray(): ByteArray{
-        val newArray = this.removeSurrounding("[", "]").split(", ").toTypedArray()
+        val newArray = this.removeSurrounding("[", "]")
+            .split(", ").toTypedArray()
         val newByteArray = ByteArray(newArray.size)
         for ((index, x) in newArray.withIndex()) { newByteArray[index]= x.toByte()}
         return newByteArray
     }
 
     private fun String.contentStringToInt(): Int{
-        val newArray = this.removeSurrounding("[", "]").split(", ").toTypedArray()
+        val newArray = this.removeSurrounding("[", "]")
+            .split(", ").toTypedArray()
         var newValue = 1
         for (x in newArray) newValue *= x.toInt()
         return newValue
